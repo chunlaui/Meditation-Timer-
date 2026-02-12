@@ -145,6 +145,65 @@
       .blue {
         background-color: #3498db;
       }
+
+      body.embed-compact .viewport {
+        padding: 6px;
+      }
+
+      body.embed-compact .app {
+        width: 340px;
+        max-width: 340px;
+        padding: 14px;
+        border-radius: 12px;
+      }
+
+      body.embed-compact .inputs {
+        gap: 6px;
+      }
+
+      body.embed-compact label {
+        gap: 4px;
+        font-size: 12px;
+      }
+
+      body.embed-compact input {
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+
+      body.embed-compact .controls {
+        margin-top: 10px;
+        gap: 8px;
+      }
+
+      body.embed-compact button {
+        padding: 8px;
+        font-size: 13px;
+      }
+
+      body.embed-compact .phase {
+        margin: 14px 0 8px;
+        font-size: 15px;
+      }
+
+      body.embed-compact .timer-circle {
+        width: 132px;
+        height: 132px;
+        font-size: 50px;
+      }
+
+      body.embed-compact .meta {
+        margin-top: 12px;
+      }
+
+      body.embed-compact #cycleCount {
+        font-size: 15px;
+      }
+
+      body.embed-compact .dots {
+        min-height: 12px;
+        margin-top: 6px;
+      }
     </style>
   </head>
   <body>
@@ -203,13 +262,22 @@
       let remaining = getInputValue(inhaleInput);
       let cycles = 0;
 
+      const params = new URLSearchParams(window.location.search);
+      const isForcedCompact = params.get('embed') === 'notion' || params.get('compact') === '1';
+      const isInIframe = window.self !== window.top;
+      const isNotionReferrer = document.referrer.includes('notion.so') || document.referrer.includes('notion.site');
+
+      if (isForcedCompact || isInIframe || isNotionReferrer) {
+        document.body.classList.add('embed-compact');
+      }
 
       function applyResponsiveScale() {
         app.style.transform = 'scale(1)';
 
         const viewportPadding = 24;
         const availableWidth = Math.max(window.innerWidth - viewportPadding, 240);
-        const availableHeight = Math.max(window.innerHeight - viewportPadding, 320);
+        const minHeight = document.body.classList.contains('embed-compact') ? 220 : 320;
+        const availableHeight = Math.max(window.innerHeight - viewportPadding, minHeight);
 
         const naturalWidth = app.offsetWidth;
         const naturalHeight = app.scrollHeight;
