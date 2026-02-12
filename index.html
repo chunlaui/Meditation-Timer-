@@ -18,32 +18,39 @@
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
         font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
         background: radial-gradient(circle at top, #1a2334, var(--bg));
         color: var(--text);
       }
 
+      .viewport {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 12px;
+      }
+
       .app {
-        width: min(210px, 45vw);
+        width: 420px;
+        max-width: 420px;
         background: color-mix(in srgb, var(--card) 90%, black);
         border: 1px solid #29344b;
-        border-radius: 8px;
-        padding: 11px;
+        border-radius: 16px;
+        padding: 22px;
         box-shadow: 0 18px 50px rgb(0 0 0 / 45%);
+        transform-origin: center center;
       }
 
       .inputs {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 5px;
+        gap: 10px;
       }
 
       label {
         display: grid;
-        gap: 3px;
-        font-size: 6px;
+        gap: 6px;
+        font-size: 13px;
       }
 
       input {
@@ -53,11 +60,11 @@
         padding: 8px 10px;
         background: #0f1420;
         color: #fff;
-        font-size: 7px;
+        font-size: 15px;
       }
 
       .controls {
-        margin-top: 7px;
+        margin-top: 14px;
         display: flex;
         gap: 10px;
       }
@@ -68,7 +75,7 @@
         border-radius: 10px;
         padding: 10px;
         color: #fff;
-        font-size: 7px;
+        font-size: 14px;
         cursor: pointer;
       }
 
@@ -81,22 +88,21 @@
       }
 
       .phase {
-        margin: 10px 0 10px;
+        margin: 22px 0 10px;
         text-align: center;
-        font-size: 8px;
+        font-size: 16px;
         font-weight: 700;
       }
 
       .timer-circle {
-        width: 100px;
-        height: 100px;
-        border-radius:50%;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
         margin: 0 auto;
         display: grid;
         place-items: center;
-        font-size: 30
-          px;
-        font-weight: 400;
+        font-size: 62px;
+        font-weight: 800;
         color: #ffffff;
         transition: background-color 0.3s ease;
       }
@@ -107,12 +113,12 @@
       }
 
       #cycleCount {
-        font-size: 8px;
+        font-size: 18px;
         font-weight: 700;
       }
 
       .dots {
-        min-height: 8px;
+        min-height: 16px;
         margin-top: 8px;
         display: flex;
         justify-content: center;
@@ -121,8 +127,8 @@
       }
 
       .dot {
-        width: 4px;
-        height: 4px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background: #d9dfea;
         opacity: 0.9;
@@ -142,7 +148,8 @@
     </style>
   </head>
   <body>
-    <main class="app">
+    <div class="viewport">
+      <main class="app" id="app">
       <section class="inputs">
         <label>
           들숨 (초)
@@ -170,9 +177,11 @@
         <div id="cycleCount">완료 사이클: 0</div>
         <div class="dots" id="dots"></div>
       </section>
-    </main>
+      </main>
+    </div>
 
     <script>
+      const app = document.getElementById('app');
       const inhaleInput = document.getElementById('inhaleInput');
       const pauseInput = document.getElementById('pauseInput');
       const exhaleInput = document.getElementById('exhaleInput');
@@ -193,6 +202,24 @@
       let phaseIndex = 0;
       let remaining = getInputValue(inhaleInput);
       let cycles = 0;
+
+
+      function applyResponsiveScale() {
+        app.style.transform = 'scale(1)';
+
+        const viewportPadding = 24;
+        const availableWidth = Math.max(window.innerWidth - viewportPadding, 240);
+        const availableHeight = Math.max(window.innerHeight - viewportPadding, 320);
+
+        const naturalWidth = app.offsetWidth;
+        const naturalHeight = app.scrollHeight;
+
+        const scaleByWidth = availableWidth / naturalWidth;
+        const scaleByHeight = availableHeight / naturalHeight;
+        const scale = Math.min(1, scaleByWidth, scaleByHeight);
+
+        app.style.transform = `scale(${scale})`;
+      }
 
       function getInputValue(inputEl) {
         const value = Number.parseInt(inputEl.value, 10);
@@ -270,11 +297,14 @@
         });
       });
 
+      window.addEventListener('resize', applyResponsiveScale);
+
       startBtn.addEventListener('click', start);
       resetBtn.addEventListener('click', reset);
 
       render();
       phaseLabel.textContent = '대기';
+      applyResponsiveScale();
     </script>
   </body>
 </html>
