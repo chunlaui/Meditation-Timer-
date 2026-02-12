@@ -1,2 +1,0 @@
-# Meditation-Timer-
-Meditation Timer
