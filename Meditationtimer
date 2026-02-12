@@ -1,285 +1,279 @@
-diff --git a/breathing-timer.html b/breathing-timer.html
-new file mode 100644
-index 0000000000000000000000000000000000000000..8fbba78cf3a9fe7a5a870b977ae3e12c4a128ccf
---- /dev/null
-+++ b/breathing-timer.html
-@@ -0,0 +1,279 @@
-+<!doctype html>
-+<html lang="ko">
-+  <head>
-+    <meta charset="UTF-8" />
-+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+    <title>호흡 타이머</title>
-+    <style>
-+      :root {
-+        --bg: #10131a;
-+        --card: #171d28;
-+        --text: #e9eef9;
-+      }
-+
-+      * {
-+        box-sizing: border-box;
-+      }
-+
-+      body {
-+        margin: 0;
-+        min-height: 100vh;
-+        display: grid;
-+        place-items: center;
-+        font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
-+        background: radial-gradient(circle at top, #1a2334, var(--bg));
-+        color: var(--text);
-+      }
-+
-+      .app {
-+        width: min(420px, 92vw);
-+        background: color-mix(in srgb, var(--card) 90%, black);
-+        border: 1px solid #29344b;
-+        border-radius: 16px;
-+        padding: 22px;
-+        box-shadow: 0 18px 50px rgb(0 0 0 / 45%);
-+      }
-+
-+      .inputs {
-+        display: grid;
-+        grid-template-columns: repeat(3, minmax(0, 1fr));
-+        gap: 10px;
-+      }
-+
-+      label {
-+        display: grid;
-+        gap: 6px;
-+        font-size: 13px;
-+      }
-+
-+      input {
-+        width: 100%;
-+        border: 1px solid #33405d;
-+        border-radius: 8px;
-+        padding: 8px 10px;
-+        background: #0f1420;
-+        color: #fff;
-+        font-size: 15px;
-+      }
-+
-+      .controls {
-+        margin-top: 14px;
-+        display: flex;
-+        gap: 10px;
-+      }
-+
-+      button {
-+        flex: 1;
-+        border: none;
-+        border-radius: 10px;
-+        padding: 10px;
-+        color: #fff;
-+        font-size: 14px;
-+        cursor: pointer;
-+      }
-+
-+      #startBtn {
-+        background: #2a8bff;
-+      }
-+
-+      #resetBtn {
-+        background: #4a566e;
-+      }
-+
-+      .phase {
-+        margin: 22px 0 10px;
-+        text-align: center;
-+        font-size: 16px;
-+        font-weight: 700;
-+      }
-+
-+      .timer-circle {
-+        width: 200px;
-+        height: 200px;
-+        border-radius: 50%;
-+        margin: 0 auto;
-+        display: grid;
-+        place-items: center;
-+        font-size: 62px;
-+        font-weight: 800;
-+        color: #ffffff;
-+        transition: background-color 0.3s ease;
-+      }
-+
-+      .meta {
-+        margin-top: 18px;
-+        text-align: center;
-+      }
-+
-+      #cycleCount {
-+        font-size: 18px;
-+        font-weight: 700;
-+      }
-+
-+      .dots {
-+        min-height: 16px;
-+        margin-top: 8px;
-+        display: flex;
-+        justify-content: center;
-+        flex-wrap: wrap;
-+        gap: 6px;
-+      }
-+
-+      .dot {
-+        width: 8px;
-+        height: 8px;
-+        border-radius: 50%;
-+        background: #d9dfea;
-+        opacity: 0.9;
-+      }
-+
-+      .green {
-+        background-color: #2ecc71;
-+      }
-+
-+      .yellow {
-+        background-color: #f1c40f;
-+      }
-+
-+      .blue {
-+        background-color: #3498db;
-+      }
-+    </style>
-+  </head>
-+  <body>
-+    <main class="app">
-+      <section class="inputs">
-+        <label>
-+          들숨 (초)
-+          <input id="inhaleInput" type="number" min="1" value="6" />
-+        </label>
-+        <label>
-+          Pause (초)
-+          <input id="pauseInput" type="number" min="1" value="4" />
-+        </label>
-+        <label>
-+          날숨 (초)
-+          <input id="exhaleInput" type="number" min="1" value="8" />
-+        </label>
-+      </section>
-+
-+      <section class="controls">
-+        <button id="startBtn">시작 / 재시작</button>
-+        <button id="resetBtn">리셋</button>
-+      </section>
-+
-+      <div class="phase" id="phaseLabel">대기</div>
-+      <div class="timer-circle green" id="timerCircle">6</div>
-+
-+      <section class="meta">
-+        <div id="cycleCount">완료 사이클: 0</div>
-+        <div class="dots" id="dots"></div>
-+      </section>
-+    </main>
-+
-+    <script>
-+      const inhaleInput = document.getElementById('inhaleInput');
-+      const pauseInput = document.getElementById('pauseInput');
-+      const exhaleInput = document.getElementById('exhaleInput');
-+      const startBtn = document.getElementById('startBtn');
-+      const resetBtn = document.getElementById('resetBtn');
-+      const phaseLabel = document.getElementById('phaseLabel');
-+      const timerCircle = document.getElementById('timerCircle');
-+      const cycleCount = document.getElementById('cycleCount');
-+      const dots = document.getElementById('dots');
-+
-+      const phases = [
-+        { key: 'inhale', label: '들숨', className: 'green', getDuration: () => getInputValue(inhaleInput) },
-+        { key: 'pause', label: 'Pause', className: 'yellow', getDuration: () => getInputValue(pauseInput) },
-+        { key: 'exhale', label: '날숨', className: 'blue', getDuration: () => getInputValue(exhaleInput) }
-+      ];
-+
-+      let timerId = null;
-+      let phaseIndex = 0;
-+      let remaining = getInputValue(inhaleInput);
-+      let cycles = 0;
-+
-+      function getInputValue(inputEl) {
-+        const value = Number.parseInt(inputEl.value, 10);
-+        return Number.isFinite(value) && value > 0 ? value : 1;
-+      }
-+
-+      function render() {
-+        const phase = phases[phaseIndex];
-+
-+        phaseLabel.textContent = `${phase.label} 페이즈`;
-+        timerCircle.textContent = remaining;
-+        timerCircle.classList.remove('green', 'yellow', 'blue');
-+        timerCircle.classList.add(phase.className);
-+        cycleCount.textContent = `완료 사이클: ${cycles}`;
-+      }
-+
-+      function appendDot() {
-+        const dot = document.createElement('span');
-+        dot.className = 'dot';
-+        dots.appendChild(dot);
-+      }
-+
-+      function stopTimer() {
-+        if (timerId) {
-+          clearInterval(timerId);
-+          timerId = null;
-+        }
-+      }
-+
-+      function tick() {
-+        remaining -= 1;
-+
-+        if (remaining > 0) {
-+          render();
-+          return;
-+        }
-+
-+        if (phaseIndex === phases.length - 1) {
-+          cycles += 1;
-+          appendDot();
-+        }
-+
-+        phaseIndex = (phaseIndex + 1) % phases.length;
-+        remaining = phases[phaseIndex].getDuration();
-+        render();
-+      }
-+
-+      function start() {
-+        stopTimer();
-+        phaseIndex = 0;
-+        cycles = 0;
-+        dots.innerHTML = '';
-+        remaining = phases[0].getDuration();
-+        render();
-+
-+        timerId = setInterval(tick, 1000);
-+      }
-+
-+      function reset() {
-+        stopTimer();
-+        phaseIndex = 0;
-+        cycles = 0;
-+        dots.innerHTML = '';
-+        remaining = phases[0].getDuration();
-+        render();
-+        phaseLabel.textContent = '대기';
-+      }
-+
-+      [inhaleInput, pauseInput, exhaleInput].forEach((input) => {
-+        input.addEventListener('change', () => {
-+          if (!timerId) {
-+            remaining = phases[0].getDuration();
-+            render();
-+          }
-+        });
-+      });
-+
-+      startBtn.addEventListener('click', start);
-+      resetBtn.addEventListener('click', reset);
-+
-+      render();
-+      phaseLabel.textContent = '대기';
-+    </script>
-+  </body>
-+</html>
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>호흡 타이머</title>
+    <style>
+      :root {
+        --bg: #10131a;
+        --card: #171d28;
+        --text: #e9eef9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+        background: radial-gradient(circle at top, #1a2334, var(--bg));
+        color: var(--text);
+      }
+
+      .app {
+        width: min(420px, 92vw);
+        background: color-mix(in srgb, var(--card) 90%, black);
+        border: 1px solid #29344b;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 18px 50px rgb(0 0 0 / 45%);
+      }
+
+      .inputs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid #33405d;
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #0f1420;
+        color: #fff;
+        font-size: 15px;
+      }
+
+      .controls {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        flex: 1;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #startBtn {
+        background: #2a8bff;
+      }
+
+      #resetBtn {
+        background: #4a566e;
+      }
+
+      .phase {
+        margin: 22px 0 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .timer-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        margin: 0 auto;
+        display: grid;
+        place-items: center;
+        font-size: 62px;
+        font-weight: 800;
+        color: #ffffff;
+        transition: background-color 0.3s ease;
+      }
+
+      .meta {
+        margin-top: 18px;
+        text-align: center;
+      }
+
+      #cycleCount {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .dots {
+        min-height: 16px;
+        margin-top: 8px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #d9dfea;
+        opacity: 0.9;
+      }
+
+      .green {
+        background-color: #2ecc71;
+      }
+
+      .yellow {
+        background-color: #f1c40f;
+      }
+
+      .blue {
+        background-color: #3498db;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="inputs">
+        <label>
+          들숨 (초)
+          <input id="inhaleInput" type="number" min="1" value="6" />
+        </label>
+        <label>
+          Pause (초)
+          <input id="pauseInput" type="number" min="1" value="4" />
+        </label>
+        <label>
+          날숨 (초)
+          <input id="exhaleInput" type="number" min="1" value="8" />
+        </label>
+      </section>
+
+      <section class="controls">
+        <button id="startBtn">시작 / 재시작</button>
+        <button id="resetBtn">리셋</button>
+      </section>
+
+      <div class="phase" id="phaseLabel">대기</div>
+      <div class="timer-circle green" id="timerCircle">6</div>
+
+      <section class="meta">
+        <div id="cycleCount">완료 사이클: 0</div>
+        <div class="dots" id="dots"></div>
+      </section>
+    </main>
+
+    <script>
+      const inhaleInput = document.getElementById('inhaleInput');
+      const pauseInput = document.getElementById('pauseInput');
+      const exhaleInput = document.getElementById('exhaleInput');
+      const startBtn = document.getElementById('startBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const phaseLabel = document.getElementById('phaseLabel');
+      const timerCircle = document.getElementById('timerCircle');
+      const cycleCount = document.getElementById('cycleCount');
+      const dots = document.getElementById('dots');
+
+      const phases = [
+        { key: 'inhale', label: '들숨', className: 'green', getDuration: () => getInputValue(inhaleInput) },
+        { key: 'pause', label: 'Pause', className: 'yellow', getDuration: () => getInputValue(pauseInput) },
+        { key: 'exhale', label: '날숨', className: 'blue', getDuration: () => getInputValue(exhaleInput) }
+      ];
+
+      let timerId = null;
+      let phaseIndex = 0;
+      let remaining = getInputValue(inhaleInput);
+      let cycles = 0;
+
+      function getInputValue(inputEl) {
+        const value = Number.parseInt(inputEl.value, 10);
+        return Number.isFinite(value) && value > 0 ? value : 1;
+      }
+
+      function render() {
+        const phase = phases[phaseIndex];
+
+        phaseLabel.textContent = `${phase.label} 페이즈`;
+        timerCircle.textContent = remaining;
+        timerCircle.classList.remove('green', 'yellow', 'blue');
+        timerCircle.classList.add(phase.className);
+        cycleCount.textContent = `완료 사이클: ${cycles}`;
+      }
+
+      function appendDot() {
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dots.appendChild(dot);
+      }
+
+      function stopTimer() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+      }
+
+      function tick() {
+        remaining -= 1;
+
+        if (remaining > 0) {
+          render();
+          return;
+        }
+
+        if (phaseIndex === phases.length - 1) {
+          cycles += 1;
+          appendDot();
+        }
+
+        phaseIndex = (phaseIndex + 1) % phases.length;
+        remaining = phases[phaseIndex].getDuration();
+        render();
+      }
+
+      function start() {
+        stopTimer();
+        phaseIndex = 0;
+        cycles = 0;
+        dots.innerHTML = '';
+        remaining = phases[0].getDuration();
+        render();
+
+        timerId = setInterval(tick, 1000);
+      }
+
+      function reset() {
+        stopTimer();
+        phaseIndex = 0;
+        cycles = 0;
+        dots.innerHTML = '';
+        remaining = phases[0].getDuration();
+        render();
+        phaseLabel.textContent = '대기';
+      }
+
+      [inhaleInput, pauseInput, exhaleInput].forEach((input) => {
+        input.addEventListener('change', () => {
+          if (!timerId) {
+            remaining = phases[0].getDuration();
+            render();
+          }
+        });
+      });
+
+      startBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+
+      render();
+      phaseLabel.textContent = '대기';
+    </script>
+  </body>
+</html>
