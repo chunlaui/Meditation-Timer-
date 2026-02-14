@@ -261,6 +261,7 @@
       let phaseIndex = 0;
       let remaining = getInputValue(inhaleInput);
       let cycles = 0;
+      let audioContext = null;
 
       const params = new URLSearchParams(window.location.search);
       const isForcedCompact = params.get('embed') === 'notion' || params.get('compact') === '1';
@@ -294,6 +295,45 @@
         return Number.isFinite(value) && value > 0 ? value : 1;
       }
 
+      function initAudioContext() {
+        if (!audioContext) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            return;
+          }
+
+          audioContext = new AudioContextClass();
+        }
+
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      }
+
+      function playPhaseBeep() {
+        if (!audioContext) {
+          return;
+        }
+
+        const duration = 0.12;
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, now);
+
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+      }
+
       function render() {
         const phase = phases[phaseIndex];
 
@@ -325,6 +365,8 @@
           return;
         }
 
+        playPhaseBeep();
+
         if (phaseIndex === phases.length - 1) {
           cycles += 1;
           appendDot();
@@ -336,6 +378,7 @@
       }
 
       function start() {
+        initAudioContext();
         stopTimer();
         phaseIndex = 0;
         cycles = 0;
